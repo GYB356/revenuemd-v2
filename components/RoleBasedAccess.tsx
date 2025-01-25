@@ -1,8 +1,8 @@
-import React from 'react'
-import { useAuth } from '../contexts/AuthContext'
+import type React from "react"
+import { useAuth } from "../lib/contexts/AuthContext"
 
 interface RoleBasedAccessProps {
-  allowedRoles: ('admin' | 'provider' | 'billing_staff')[]
+  allowedRoles: ("admin" | "provider" | "billing_staff")[]
   children: React.ReactNode
 }
 
@@ -17,3 +17,4 @@ const RoleBasedAccess: React.FC<RoleBasedAccessProps> = ({ allowedRoles, childre
 }
 
 export default RoleBasedAccess
+
