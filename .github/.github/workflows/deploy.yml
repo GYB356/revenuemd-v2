@@ -1,3 +1,35 @@
-git add .github/workflows/deploy.yml
-git commit -m "Add deployment workflow"
-git push origin main
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Kubernetes CLI
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.27.3'
+
+    - name: Authenticate with Kubernetes Cluster
+      env:
+        KUBECONFIG: ${{ secrets.KUBECONFIG }}
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG_CONTENT }}" > ~/.kube/config
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/deployment.yml
+        kubectl apply -f k8s/service.yml
+
+    - name: Verify deployment
+      run: |
+        kubectl rollout status deployment/<your-deployment-name>
