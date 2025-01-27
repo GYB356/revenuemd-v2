@@ -2,7 +2,7 @@
 
 RevenueMD is a comprehensive healthcare revenue management dashboard that provides real-time insights into claims, revenue trends, and payer performance.
 
-## Features
+# Features
 
 - Interactive charts and tables for revenue analysis
 - Claims tracking and management
