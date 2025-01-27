@@ -1,4 +1,4 @@
-name: Deploy to Kubernetes
+name: Deploy to Vercel
 
 on:
   push:
@@ -10,26 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Kubernetes CLI
-      uses: azure/setup-kubectl@v3
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
       with:
-        version: 'v1.27.3'
+        node-version: 18
 
-    - name: Authenticate with Kubernetes Cluster
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run tests
+      run: npm test
+
+    - name: Build project
+      run: npm run build
+
+    - name: Deploy to Vercel
       env:
-        KUBECONFIG: ${{ secrets.KUBECONFIG }}
-      run: |
-        mkdir -p ~/.kube
-        echo "${{ secrets.KUBECONFIG_CONTENT }}" > ~/.kube/config
-
-    - name: Deploy to Kubernetes
-      run: |
-        kubectl apply -f k8s/deployment.yml
-        kubectl apply -f k8s/service.yml
-
-    - name: Verify deployment
-      run: |
-        kubectl rollout status deployment/<your-deployment-name>
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      run: npx vercel deploy --prod
