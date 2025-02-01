@@ -1,12 +1,12 @@
-import type { Metadata } from "next"
+import "@/styles/globals.css"
 import { Inter } from "next/font/google"
-import "./globals.css"
+import type React from "react"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata: Metadata = {
-  title: "RevenueMD",
-  description: "Healthcare Revenue Management Dashboard",
+export const metadata = {
+  title: "RevenueMD Dashboard",
+  description: "System metrics monitoring dashboard",
 }
 
 export default function RootLayout({
@@ -20,3 +20,5 @@ export default function RootLayout({
     </html>
   )
 }
+
+
