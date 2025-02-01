@@ -1,4 +1,3 @@
-// Update this file to handle the new data format from the updated metrics API
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -22,13 +21,25 @@ export default function MetricsDashboard() {
     setError(null)
 
     try {
-      const response = await fetch("/api/metrics")
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      const data = await response.json()
+      const [influxResponse, prometheusResponse] = await Promise.all([
+        fetch("/api/metrics/influx"),
+        fetch("/api/metrics/prometheus"),
+      ])
 
-      setMetrics(data)
+      if (!influxResponse.ok) {
+        throw new Error(`InfluxDB HTTP error! status: ${influxResponse.status}`)
+      }
+      if (!prometheusResponse.ok) {
+        throw new Error(`Prometheus HTTP error! status: ${prometheusResponse.status}`)
+      }
+
+      const influxData = await influxResponse.json()
+      const prometheusData = await prometheusResponse.json()
+
+      setMetrics({
+        influxData: influxData.data,
+        prometheusData: prometheusData.data,
+      })
     } catch (err) {
       console.error("Error fetching metrics:", err)
       setError(err instanceof Error ? err.message : "An unknown error occurred")
@@ -91,3 +102,4 @@ export default function MetricsDashboard() {
     </Card>
   )
 }
+
