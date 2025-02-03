@@ -1,79 +1,63 @@
-// This file should be updated with the latest InfluxDB and Prometheus integration
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
+import { InfluxDB } from "@influxdata/influxdb-client";
+import Redis from "ioredis";
+
+const influxToken = process.env.INFLUXDB_TOKEN;
+const influxOrg = process.env.INFLUXDB_ORG;
+const influxBucket = process.env.INFLUXDB_BUCKET;
+const influxUrl = process.env.INFLUXDB_URL;
+const redisUrl = process.env.REDIS_URL;
+
+if (!influxToken || !influxOrg || !influxBucket || !influxUrl || !redisUrl) {
+  throw new Error("Missing required environment variables for InfluxDB or Redis.");
+}
+
+// Initialize Redis connection
+const redis = new Redis(redisUrl);
 
 export async function GET() {
-  const influxUrl = process.env.INFLUXDB_URL
-  const influxOrg = process.env.INFLUXDB_ORG
-  const influxBucket = process.env.INFLUXDB_BUCKET
-  const influxToken = process.env.INFLUXDB_TOKEN
-  const prometheusUrl = process.env.PROMETHEUS_URL
-  const prometheusToken = process.env.PROMETHEUS_TOKEN
-
-  if (!influxUrl || !influxOrg || !influxBucket || !influxToken || !prometheusUrl || !prometheusToken) {
-    console.error("Missing InfluxDB or Prometheus environment variables")
-    return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
-  }
-
   try {
-    // InfluxDB query
-    const influxQueryUrl = `${influxUrl}/api/v2/query?org=${influxOrg}`
-    const influxQuery = `
-      from(bucket:"${influxBucket}")
-        |> range(start: -5m)
-        |> filter(fn: (r) => r._measurement == "system_metrics" or r._measurement == "app_metrics")
-        |> group(columns: ["_measurement", "_field"])
-        |> last()
-    `
-
-    const influxResponse = await fetch(influxQueryUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${influxToken}`,
-        "Content-Type": "application/vnd.flux",
-        Accept: "application/csv",
-      },
-      body: influxQuery,
-    })
-
-    if (!influxResponse.ok) {
-      throw new Error(`InfluxDB Error: ${influxResponse.status}`)
+    const cacheKey = "metrics_data";
+    
+    // 1. **Check Redis Cache First**
+    const cachedMetrics = await redis.get(cacheKey);
+    if (cachedMetrics) {
+      return NextResponse.json({ success: true, metrics: JSON.parse(cachedMetrics) });
     }
 
-    const influxData = await influxResponse.text()
+    // 2. **Query InfluxDB**
+    const queryApi = new InfluxDB({ url: influxUrl, token: influxToken }).getQueryApi(influxOrg);
+    const fluxQuery = `
+      from(bucket: "${influxBucket}")
+      |> range(start: -1h)
+      |> filter(fn: (r) => r._measurement == "system_metrics")
+    `;
 
-    // Prometheus query
-    const prometheusQueryUrl = `${prometheusUrl}/api/v1/query`
-    const prometheusQuery = "up" // Simple query to check if Prometheus is up
+    const data: Array<{ timestamp: string; metric: string; value: number; unit?: string }> = [];
 
-    const prometheusResponse = await fetch(`${prometheusQueryUrl}?query=${encodeURIComponent(prometheusQuery)}`, {
-      headers: {
-        Authorization: `Bearer ${prometheusToken}`,
-      },
-    })
+    await queryApi.collectRows(fluxQuery, (row) => {
+      data.push({
+        timestamp: row._time,
+        metric: row._field,
+        value: row._value,
+        unit: row.unit || "",
+      });
+    });
 
-    if (!prometheusResponse.ok) {
-      throw new Error(`Prometheus Error: ${prometheusResponse.status}`)
-    }
+    // 3. **Cache the Results in Redis** (Set expiration to 60 seconds)
+    await redis.set(cacheKey, JSON.stringify(data), "EX", 60);
 
-    const prometheusData = await prometheusResponse.json()
-
-    // Combine and return data
-    return NextResponse.json({
-      influxData: influxData,
-      prometheusData: prometheusData,
-    })
-  } catch (error) {
-    console.error("Error in /api/metrics:", error)
+    return NextResponse.json({ success: true, metrics: data });
+  } catch (error: any) {
+    console.error("Error fetching metrics:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error occurred" },
-      { status: 500 },
-    )
+      { success: false, error: "Failed to fetch metrics", details: error.message },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(request: Request) {
-  const body = await request.json()
-  // Process the POST request here
-  return NextResponse.json({ message: "Metrics POST request processed", receivedData: body })
-}
+// ✅ **Correct Next.js 14+ Runtime Configuration**
+export const runtime = "nodejs";
+
 
