@@ -1,12 +1,12 @@
-import "@/styles/globals.css"
 import { Inter } from "next/font/google"
-import type React from "react"
+import "./globals.css"
+import type React from "react" // Import React
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "RevenueMD Dashboard",
-  description: "System metrics monitoring dashboard",
+  title: "RevenueMD - Healthcare Management Platform",
+  description: "Secure healthcare revenue cycle management platform",
 }
 
 export default function RootLayout({
@@ -20,5 +20,4 @@ export default function RootLayout({
     </html>
   )
 }
-
 

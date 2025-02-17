@@ -1,0 +1,38 @@
+{
+  "name": "revenuemd",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0",
+    "next": "14.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "openai": "^4.0.0",
+    "redis": "^4.6.7",
+    "winston": "^3.9.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.2",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/node": "^20.4.5",
+    "@types/react": "^18.2.17",
+    "@types/react-dom": "^18.2.7",
+    "autoprefixer": "^10.4.14",
+    "eslint": "8.45.0",
+    "eslint-config-next": "14.0.0",
+    "postcss": "^8.4.27",
+    "prisma": "^5.0.0",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.1.6"
+  }
+}

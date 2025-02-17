@@ -1,0 +1,124 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  role          Role          @default(USER)
+  createdClaims Claim[]       @relation("CreatedBy")
+  refreshTokens RefreshToken[]
+  logs          Log[]
+  activities    UserActivity[]
+  attachments   Attachment[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Patient {
+  id            String   @id @default(cuid())
+  name          String
+  contactInfo   Json
+  medicalRecord Json?
+  claims        Claim[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Claim {
+  id               String      @id @default(cuid())
+  amount          Decimal
+  status          ClaimStatus @default(PENDING)
+  procedureCodes  String[]
+  diagnosisCodes  String[]
+  notes           String?
+  isFraudulent    Boolean     @default(false)
+  fraudCheckDetails Json?
+  patient         Patient     @relation(fields: [patientId], references: [id])
+  patientId       String
+  creator         User        @relation("CreatedBy", fields: [createdBy], references: [id])
+  createdBy       String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([createdBy])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId], map: "refresh_token_user_id_idx")
+  @@index([token], map: "refresh_token_token_idx")
+  @@index([expiresAt], map: "refresh_token_expires_at_idx")
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model Attachment {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  type        String
+  size        Int
+  entityType  String
+  entityId    String
+  uploadedBy  String
+  uploader    User     @relation(fields: [uploadedBy], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@index([uploadedBy])
+  @@index([createdAt])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  DENIED
+}

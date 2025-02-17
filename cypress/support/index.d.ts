@@ -1,0 +1,9 @@
+ /// <reference types="cypress" />
+
+declare namespace Cypress {
+    interface Chainable {
+      login(email: string, password: string): Chainable<void>
+      createPatient(data: any): Chainable<void>
+      createClaim(data: any): Chainable<void>
+    }
+  }

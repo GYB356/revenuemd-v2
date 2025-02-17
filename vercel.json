@@ -1,0 +1,43 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "package.json",
+        "use": "@vercel/next"
+      }
+    ],
+    "env": {
+      "DATABASE_URL": "@database-url",
+      "MONGODB_URI": "@mongodb-uri",
+      "JWT_SECRET": "@jwt-secret",
+      "JWT_REFRESH_SECRET": "@jwt-refresh-secret",
+      "REDIS_URL": "@redis-url",
+      "OPENAI_API_KEY": "@openai-api-key",
+      "NEXT_PUBLIC_API_URL": "@api-url",
+      "RATE_LIMIT_REQUESTS": "5",
+      "RATE_LIMIT_WINDOW": "10"
+    },
+    "headers": [
+      {
+        "source": "/(.*)",
+        "headers": [
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "origin-when-cross-origin"
+          },
+          {
+            "key": "X-XSS-Protection",
+            "value": "1; mode=block"
+          }
+        ]
+      }
+    ]
+  }

@@ -1,0 +1,60 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+datasource mongo {
+  provider = "mongodb"
+  url      = env("MONGO_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String       @id @default(cuid())
+  username     String       @unique
+  email        String       @unique
+  password     String
+  role         Role         @default(USER)
+  patients     Patient[]
+  refreshTokens RefreshToken[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([email])
+}
+
+model Patient {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  name         String
+  dateOfBirth  DateTime
+  gender       Gender
+  contactInfo  String
+  medicalHistory String[] // Stored in MongoDB
+  summary      String?     // AI-generated summary
+  insights     String?     // AI-generated insights
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([name, dateOfBirth])
+}
+
+model Claim {
+  id          String       @id @default(cuid())
+  patientId   String
+  patient     Patient      @relation(fields: [patientId], references: [id])
+  amount      Float
+  status      Status       @default(PENDING)
+  isFraudulent Boolean     @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([patientId, status])
+}
+
+// ... (other models and enums)
+
